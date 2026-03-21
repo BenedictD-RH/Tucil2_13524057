@@ -6,12 +6,14 @@ import (
 	"os"
 	"bufio"
 	"log"
+	"go_project/matrix"
 )
 
 const viewbox_w = 600
 const viewbox_h = 600
 var max_v float32 = 5
 var min_v float32 = -5
+
 
 type Face struct {
 	v1_idx int
@@ -74,6 +76,15 @@ func DrawObject(content *fyne.Container, O *Object) {
 	for i, _ := range O.faceArray {
 		DrawFace(content, O, i)
 	}
+}
+
+func RotateObject(O *Object, r_Mat *matrix.Matrix) (*Object) {
+	r_O := NewObject()
+	r_O.faceArray = O.faceArray
+	for _, vert := range O.vertexArray {
+		AddVertex(r_O, RotateVertex(vert, r_Mat))
+	}
+	return r_O
 }
 
 func ParseObject(filename string) *Object {
