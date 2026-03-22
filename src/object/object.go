@@ -98,16 +98,18 @@ func ParseObject(filename string) *Object {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		identifier := line[0:2]
-		values := line[2:]
-		if (identifier == "v ") {
-			var x, y, z float32
-			fmt.Sscanf(values, "%f %f %f", &x, &y, &z)
-			AddVertex(O, NewVertex(x,y,z))
-		} else if (identifier == "f ") {
-			var i1, i2, i3 int
-			fmt.Sscanf(values, "%d %d %d", &i1, &i2, &i3)
-			AddFace(O, NewFace(i1,i2,i3))
+		if len(line) >= 2 {
+			identifier := line[0:2]
+			values := line[2:]
+			if (identifier == "v ") {
+				var x, y, z float32
+				fmt.Sscanf(values, "%f %f %f", &x, &y, &z)
+				AddVertex(O, NewVertex(x,y,z))
+			} else if (identifier == "f ") {
+				var i1, i2, i3 int
+				fmt.Sscanf(values, "%d %d %d", &i1, &i2, &i3)
+				AddFace(O, NewFace(i1,i2,i3))
+			}
 		}
 	}
 
