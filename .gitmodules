@@ -1,0 +1,3 @@
+[submodule "fyne"]
+	path = fyne
+	url = https://github.com/Vinci10/fyne.git
