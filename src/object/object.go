@@ -7,10 +7,11 @@ import (
 	"log"
 	"math"
 	"os"
+	
 
 	//"image/color"
 	"fyne.io/fyne/v2"
-	//"fyne.io/fyne/v2/canvas"
+	//"fyne.io/fyne/v2/container"
 )
 
 const viewbox_w = 600
@@ -19,6 +20,7 @@ const viewbox_h = 600
 var Max_v float32 = -math.MaxFloat32
 var Min_v float32 = math.MaxFloat32
 
+var RenderedObject *ObjectRender
 
 func (f Face) String() string {
 	return fmt.Sprintf("(%d, %d, %d)", f.v1_idx, f.v2_idx, f.v3_idx)
@@ -63,11 +65,24 @@ func PrintObject(O *Object) {
 	}
 }
 
-
-
 func DrawObject(content *fyne.Container, O *Object) {
 	for i, _ := range O.edgeArray {
 		DrawEdge(content, O, i)
+	}
+}
+
+func DrawObjectInitial(content *fyne.Container, O *Object) {
+	RenderedObject = NewObjectRender(O, content)
+	for i, _ := range RenderedObject.polygons {
+		UpdatePolygon(RenderedObject, i)
+	}
+}
+
+func DrawObjectPolygons(O *Object) {
+	RenderedObject.vertices = O.vertexArray
+	UpdatePolygonList(RenderedObject)
+	for i, _ := range RenderedObject.polygons {
+		go UpdatePolygon(RenderedObject, i)
 	}
 }
 
