@@ -68,7 +68,7 @@ func MultiplyMatrix(m1, m2 *Matrix) *Matrix {
 	}
 }
 
-func Transpose(m *Matrix) (*Matrix){
+func (m *Matrix) Transpose() (*Matrix){
 	mNew := NewMatrix(m.cols, m.rows)
 	for i := 0; i < mNew.rows; i++ {
 		for j := 0; j < mNew.cols; j++ {
