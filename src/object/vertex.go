@@ -34,8 +34,6 @@ func DrawVertex(c *fyne.Container, v *Vertex) {
 	DrawPoint(c, VertexTo2DPoint(v))
 }
 
-
-
 func VertexToMatrix(v *Vertex) *matrix.Matrix {
 	m := matrix.NewMatrix(3, 1)
 	m.Buffer[0][0] = v.x

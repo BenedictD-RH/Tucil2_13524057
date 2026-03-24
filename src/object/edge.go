@@ -45,3 +45,7 @@ func isVertexInAnEdge(O *Object, v *Vertex) bool {
 func DrawEdge(content *fyne.Container, O *Object, idx int) {
 	DrawEdgeTo2DSpace(content, O.vertexArray[O.edgeArray[idx].v1_idx-1], O.vertexArray[O.edgeArray[idx].v2_idx-1])
 }
+
+func DrawEdgeTo2DSpace(c *fyne.Container, v1 *Vertex, v2 *Vertex) {
+	DrawLine(c, &Line{VertexTo2DPoint(v1), VertexTo2DPoint(v2)})
+}
