@@ -1,10 +1,11 @@
 package object
 
 import (
-	//"fmt"
+	"fmt"
+	"image/color"
 	"math"
 	"sync"
-	"image/color"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"github.com/PerformLine/go-stockutil/colorutil"
@@ -13,13 +14,15 @@ import (
 type PolygonRender struct {
 	face    *Face
 	z_value float32
-	render  *canvas.ArbitraryPolygon
+	color   *color.Color
 }
 
 type ObjectRender struct {
-	polygons []*PolygonRender
-	vertices []*Vertex
-	stack *fyne.Container
+	polygons     []*PolygonRender
+	vertices     []*Vertex
+	ConvexHull   []Point
+	raster       *canvas.Raster
+	rasterBuffer [800][800]*color.Color
 }
 
 func NewPolygonRender(O *Object, f_idx int) *PolygonRender {
@@ -27,11 +30,7 @@ func NewPolygonRender(O *Object, f_idx int) *PolygonRender {
 	v2 := O.vertexArray[O.faceArray[f_idx].v2_idx-1]
 	v3 := O.vertexArray[O.faceArray[f_idx].v3_idx-1]
 	avg_z := (v1.z + v2.z + v3.z) / 3
-	render := canvas.NewArbitraryPolygon([]fyne.Position{VertexToFynePos(v1),
-														 VertexToFynePos(v2),
-														 VertexToFynePos(v3)}, color.White)
-	render.Hide()
-	return &PolygonRender{O.faceArray[f_idx], avg_z, render}
+	return &PolygonRender{O.faceArray[f_idx], avg_z, new(color.Color)}
 }
 
 func MergePolygons(p1, p2 []*PolygonRender) []*PolygonRender {
@@ -67,21 +66,42 @@ func MergeSortPolygons(p []*PolygonRender) []*PolygonRender {
 		half_point := int(len(p) / 2)
 		f_h := p[0:half_point]
 		s_h := p[half_point:]
-		sorted_f_h := MergeSortPolygons(f_h)
-		sorted_s_h := MergeSortPolygons(s_h)
+		var sorted_f_h, sorted_s_h []*PolygonRender
+		var wg sync.WaitGroup
+		wg.Add(2)
+		go func() {
+			sorted_f_h = MergeSortPolygons(f_h)
+			wg.Done()
+		}()
+		go func() {
+			sorted_s_h = MergeSortPolygons(s_h)
+			wg.Done()
+		}()
+		wg.Wait()
 		return MergePolygons(sorted_f_h, sorted_s_h)
 	}
 }
 
 func NewObjectRender(O *Object, content *fyne.Container) *ObjectRender {
-	OR := &ObjectRender{[]*PolygonRender{}, O.vertexArray, content}
+	OR := &ObjectRender{[]*PolygonRender{},
+		O.vertexArray,
+		[]Point{},
+		nil,
+		[800][800]*color.Color{}}
+	OR.ConvexHull = convex_hull_divide(GetRender2DVertices(OR))
 	for i, _ := range O.faceArray {
-		OR.polygons = append(OR.polygons, NewPolygonRender(O, i))
+		poly := NewPolygonRender(O, i)
+		*(poly.color) = PolygonColor(OR, poly)
+		OR.polygons = append(OR.polygons, poly)
 	}
 	OR.polygons = MergeSortPolygons(OR.polygons)
-	for _, p := range OR.polygons {
-		OR.stack.Add(p.render)
-	}
+	InitializeRasterBuffer(OR)
+	UpdateRasterBuffer(OR)
+	raster := canvas.NewRasterWithPixels(func(x, y, w, h int) color.Color {
+		return *OR.rasterBuffer[y][x]
+	})
+	OR.raster = raster
+	content.Add(OR.raster)
 	return OR
 }
 
@@ -136,40 +156,25 @@ func shouldPolygonBeRendered(OR *ObjectRender, p_idx int) bool {
 }
 
 func UpdatePolygonList(OR *ObjectRender) {
-	OR.stack.RemoveAll()
-	var wg sync.WaitGroup
+	OR.ConvexHull = convex_hull_divide(GetRender2DVertices(OR))
 	for _, p := range OR.polygons {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			p.render.Hide()
-			v1:= OR.vertices[p.face.v1_idx-1]
-			v2:= OR.vertices[p.face.v2_idx-1]
-			v3:= OR.vertices[p.face.v3_idx-1]
-			p.render.Points = []fyne.Position{VertexToFynePos(v1), VertexToFynePos(v2), VertexToFynePos(v3)}
-			p.z_value = (v1.z + v2.z + v3.z)/3
-		}()
+		v1 := OR.vertices[p.face.v1_idx-1]
+		v2 := OR.vertices[p.face.v2_idx-1]
+		v3 := OR.vertices[p.face.v3_idx-1]
+		p.z_value = (v1.z + v2.z + v3.z) / 3
+		*(p.color) = PolygonColor(OR, p)
 	}
-	wg.Wait()
 	OR.polygons = MergeSortPolygons(OR.polygons)
-	for _, p := range OR.polygons {
-		OR.stack.Add(p.render)
+	for _,p := range OR.polygons {
+		fmt.Println(p.z_value)
 	}
+	UpdateRasterBuffer(OR)
 }
 
-func UpdatePolygon(OR *ObjectRender, idx int) {
-	p := OR.polygons[idx]
-	p.render.FillColor = PolygonColor(OR, idx)
-	if shouldPolygonBeRendered(OR, idx) {
-		p.render.Show()
-	}
-}
-
-func PolygonColor(OR *ObjectRender, p_idx int) (color.Color) {
-	p := OR.polygons[p_idx]
-	v1:= OR.vertices[p.face.v1_idx-1]
-	v2:= OR.vertices[p.face.v2_idx-1]
-	v3:= OR.vertices[p.face.v3_idx-1]
+func PolygonColor(OR *ObjectRender, p *PolygonRender) color.Color {
+	v1 := OR.vertices[p.face.v1_idx-1]
+	v2 := OR.vertices[p.face.v2_idx-1]
+	v3 := OR.vertices[p.face.v3_idx-1]
 	e1_x := v2.x - v1.x
 	e1_y := v2.y - v1.y
 	e1_z := v2.z - v1.z
@@ -177,10 +182,10 @@ func PolygonColor(OR *ObjectRender, p_idx int) (color.Color) {
 	e2_y := v3.y - v1.y
 	e2_z := v3.z - v1.z
 	c_product_x := e1_y*e2_z - e1_z*e2_y
-	c_product_y := - (e1_x*e2_z - e1_z*e2_x)
+	c_product_y := -(e1_x*e2_z - e1_z*e2_x)
 	c_product_z := e1_x*e2_y - e1_y*e2_x
 	magnitude := math.Sqrt(float64(c_product_x*c_product_x + c_product_y*c_product_y + c_product_z*c_product_z))
-	intensity := float64(math.Abs(float64(c_product_z)))/magnitude
-	r, g, b := colorutil.HslToRgb(0, 0, max(0,intensity))
-	return color.RGBA{r,g,b,255}
+	intensity := float64(math.Abs(float64(c_product_z))) / magnitude
+	r, g, b := colorutil.HslToRgb(0, 0, max(0, intensity))
+	return color.RGBA{r, g, b, uint8(255 * max(0, intensity))}
 }
