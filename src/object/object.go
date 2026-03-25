@@ -7,15 +7,17 @@ import (
 	"log"
 	"math"
 	"os"
-	
 
-	//"image/color"
 	"fyne.io/fyne/v2"
 	//"fyne.io/fyne/v2/container"
 )
 
+const screen_w = 800
+const screen_h = 800
 const viewbox_w = 600
 const viewbox_h = 600
+const viewbox_start_x = (screen_w - viewbox_w)/2
+const viewbox_start_y = (screen_h - viewbox_h)/2
 
 var Max_v float32 = -math.MaxFloat32
 var Min_v float32 = math.MaxFloat32
@@ -73,17 +75,17 @@ func DrawObject(content *fyne.Container, O *Object) {
 
 func DrawObjectInitial(content *fyne.Container, O *Object) {
 	RenderedObject = NewObjectRender(O, content)
-	for i, _ := range RenderedObject.polygons {
-		UpdatePolygon(RenderedObject, i)
-	}
+	// for i, _ := range RenderedObject.polygons {
+	// 	UpdatePolygon(RenderedObject, i)
+	// }
 }
 
 func DrawObjectPolygons(O *Object) {
 	RenderedObject.vertices = O.vertexArray
 	UpdatePolygonList(RenderedObject)
-	for i, _ := range RenderedObject.polygons {
-		go UpdatePolygon(RenderedObject, i)
-	}
+	// for i, _ := range RenderedObject.polygons {
+	// 	go UpdatePolygon(RenderedObject, i)
+	// }
 }
 
 func RotateObject(O *Object, r_Mat *matrix.Matrix) *Object {

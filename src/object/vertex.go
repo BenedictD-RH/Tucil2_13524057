@@ -22,7 +22,8 @@ func (v Vertex) String() string {
 }
 
 func VertexTo2DPoint(v *Vertex) *Point {
-	return &Point{(v.x-Min_v)/(Max_v-Min_v)*viewbox_w + 100, (v.y-Min_v)/(Max_v-Min_v)*viewbox_h + 100}
+	return &Point{(v.x-Min_v)/(Max_v-Min_v)*viewbox_w + viewbox_start_x, 
+		          (v.y-Min_v)/(Max_v-Min_v)*viewbox_h + viewbox_start_y}
 }
 
 func VertexToFynePos(v *Vertex) fyne.Position {
