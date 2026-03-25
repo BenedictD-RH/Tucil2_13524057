@@ -1,6 +1,7 @@
 package object
 
 import (
+	"fmt"
 	"image/color"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -12,6 +13,10 @@ type Point struct {
 }
 
 const point_rad = 5
+
+func (p Point) String() string {
+	return fmt.Sprintf("(%.0f, %.0f)", p.x, p.y)
+}
 
 func DrawPoint(c *fyne.Container, p *Point) {
 	point := canvas.NewCircle(color.White)
