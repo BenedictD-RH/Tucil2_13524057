@@ -17,6 +17,18 @@ func NewVertex(x float32, y float32, z float32) *Vertex {
 	return &Vertex{x, y, z}
 }
 
+func (v *Vertex) GetX() (float32) {
+	return v.x
+}
+
+func (v *Vertex) GetY() (float32) {
+	return v.y
+}
+
+func (v *Vertex) GetZ() (float32) {
+	return v.z
+}
+
 func (v Vertex) String() string {
 	return fmt.Sprintf("(%.6f, %.6f, %.6f)", v.x, v.y, v.z)
 }
@@ -54,3 +66,21 @@ func MatrixToVertex(m *matrix.Matrix) *Vertex {
 func RotateVertex(v *Vertex, r_Mat *matrix.Matrix) *Vertex {
 	return MatrixToVertex(matrix.MultiplyMatrix(r_Mat, VertexToMatrix(v)))
 }
+
+func SumVertex(v1, v2 *Vertex) *Vertex {
+	return NewVertex(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z)
+}
+
+func SubtractVertex(v1, v2 *Vertex) *Vertex {
+	return NewVertex(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z)
+}
+
+func ScaleVertex(v *Vertex, n float32) *Vertex {
+	return NewVertex(v.x*n, v.y*n, v.z*n)
+}
+
+func MidVertex(v1, v2 *Vertex) *Vertex {
+	return NewVertex((v1.x + v2.x)/2, (v1.y + v2.y)/2, (v1.z + v2.z)/2)
+}
+
+
