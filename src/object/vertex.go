@@ -17,15 +17,15 @@ func NewVertex(x float32, y float32, z float32) *Vertex {
 	return &Vertex{x, y, z}
 }
 
-func (v *Vertex) GetX() (float32) {
+func (v *Vertex) GetX() float32 {
 	return v.x
 }
 
-func (v *Vertex) GetY() (float32) {
+func (v *Vertex) GetY() float32 {
 	return v.y
 }
 
-func (v *Vertex) GetZ() (float32) {
+func (v *Vertex) GetZ() float32 {
 	return v.z
 }
 
@@ -34,8 +34,8 @@ func (v Vertex) String() string {
 }
 
 func VertexTo2DPoint(v *Vertex) *Point {
-	return &Point{(v.x-Min_v)/(Max_v-Min_v)*viewbox_w + viewbox_start_x, 
-		          (v.y-Min_v)/(Max_v-Min_v)*viewbox_h + viewbox_start_y}
+	return &Point{(v.x-Min_v)/(Max_v-Min_v)*float32(Viewbox_w) + float32(Viewbox_start_x),
+		(v.y-Min_v)/(Max_v-Min_v)*float32(Viewbox_h) + float32(Viewbox_start_y)}
 }
 
 func VertexToFynePos(v *Vertex) fyne.Position {
@@ -68,11 +68,11 @@ func RotateVertex(v *Vertex, r_Mat *matrix.Matrix) *Vertex {
 }
 
 func SumVertex(v1, v2 *Vertex) *Vertex {
-	return NewVertex(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z)
+	return NewVertex(v1.x+v2.x, v1.y+v2.y, v1.z+v2.z)
 }
 
 func SubtractVertex(v1, v2 *Vertex) *Vertex {
-	return NewVertex(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z)
+	return NewVertex(v1.x-v2.x, v1.y-v2.y, v1.z-v2.z)
 }
 
 func ScaleVertex(v *Vertex, n float32) *Vertex {
@@ -80,7 +80,5 @@ func ScaleVertex(v *Vertex, n float32) *Vertex {
 }
 
 func MidVertex(v1, v2 *Vertex) *Vertex {
-	return NewVertex((v1.x + v2.x)/2, (v1.y + v2.y)/2, (v1.z + v2.z)/2)
+	return NewVertex((v1.x+v2.x)/2, (v1.y+v2.y)/2, (v1.z+v2.z)/2)
 }
-
-
