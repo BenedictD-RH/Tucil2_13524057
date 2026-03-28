@@ -127,7 +127,7 @@ func main() {
 	reset_button := widget.NewButton("Reset", func() {
 		if !O.IsEmpty() {
 			r_Mat = matrix.RotationMatrix_X(matrix.DegreeToRad(180))
-			view_3d.RemoveAll()
+			object.InitializeRasterBuffer(object.RenderedObject)
 			object.DrawObjectPolygons(object.RotateObject(O, r_Mat))
 			view_3d.Refresh()
 		}
@@ -141,7 +141,7 @@ func main() {
 			object.Viewbox_w = int(float32(object.Viewbox_w) * 1.2)
 			object.Viewbox_start_x = (object.Screen_w - object.Viewbox_w) / 2
 			object.Viewbox_start_y = (object.Screen_h - object.Viewbox_h) / 2
-			view_3d.RemoveAll()
+			object.InitializeRasterBuffer(object.RenderedObject)
 			object.DrawObjectPolygons(object.RotateObject(O, r_Mat))
 			view_3d.Refresh()
 		}
@@ -155,7 +155,7 @@ func main() {
 			object.Viewbox_w = int(float32(object.Viewbox_w) / 1.2)
 			object.Viewbox_start_x = (object.Screen_w - object.Viewbox_w) / 2
 			object.Viewbox_start_y = (object.Screen_h - object.Viewbox_h) / 2
-			view_3d.RemoveAll()
+			object.InitializeRasterBuffer(object.RenderedObject)
 			object.DrawObjectPolygons(object.RotateObject(O, r_Mat))
 			view_3d.Refresh()
 		}
