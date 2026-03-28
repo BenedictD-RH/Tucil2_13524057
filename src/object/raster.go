@@ -10,7 +10,7 @@ import (
 func isPointInSet(p Point, s []Point) bool {
 	for _, p_s := range s {
 		if (math.Round(float64(p_s.x)) == math.Round(float64(p.x))) && (math.Round(float64(p_s.y)) == math.Round(float64(p.y))) {
-			
+
 			return true
 		}
 	}
@@ -126,10 +126,10 @@ func InitializeRasterBuffer(OR *ObjectRender) {
 }
 
 func UpdateRasterBuffer(OR *ObjectRender) {
-	start_y := (len(OR.rasterBuffer) - viewbox_h) / 2
-	end_y := len(OR.rasterBuffer) - start_y
-	start_x := (len(OR.rasterBuffer[0]) - viewbox_w) / 2
-	end_x := len(OR.rasterBuffer[0]) - start_x
+	start_y := max(0, (len(OR.rasterBuffer) - Viewbox_h) / 2)
+	end_y := min(Screen_h, len(OR.rasterBuffer) - start_y)
+	start_x := max(0, (len(OR.rasterBuffer[0]) - Viewbox_w) / 2)
+	end_x := min(Screen_w, len(OR.rasterBuffer[0]) - start_x)
 	for y := start_y; y < end_y; y++ {
 		for x := start_x; x < end_x; x++ {
 			go func() {
