@@ -7,17 +7,19 @@ import (
 	"log"
 	"math"
 	"os"
+	"errors"
 
 	"fyne.io/fyne/v2"
 	//"fyne.io/fyne/v2/container"
 )
 
-const screen_w = 800
-const screen_h = 800
-const viewbox_w = 600
-const viewbox_h = 600
-const viewbox_start_x = (screen_w - viewbox_w) / 2
-const viewbox_start_y = (screen_h - viewbox_h) / 2
+const Screen_w = 800
+const Screen_h = 800
+
+var Viewbox_w int = 600
+var Viewbox_h int = 600
+var Viewbox_start_x = (Screen_w - Viewbox_w) / 2
+var Viewbox_start_y = (Screen_h - Viewbox_h) / 2
 
 var Max_v float32 = -math.MaxFloat32
 var Min_v float32 = math.MaxFloat32
@@ -100,11 +102,15 @@ func NewObject() *Object {
 			nil}}
 }
 
+func (O *Object) IsEmpty() (bool) {
+	return len(O.VertexArray) == 0 && len(O.FaceArray) == 0
+}
+
 func GetFaceVertices(O *Object, f *Face) []*Vertex {
 	vert := [3]*Vertex{}
-	vert[0] = O.VertexArray[f.v1_idx - 1]
-	vert[1] = O.VertexArray[f.v2_idx - 1]
-	vert[2] = O.VertexArray[f.v3_idx - 1]
+	vert[0] = O.VertexArray[f.v1_idx-1]
+	vert[1] = O.VertexArray[f.v2_idx-1]
+	vert[2] = O.VertexArray[f.v3_idx-1]
 	return vert[:]
 }
 
@@ -145,9 +151,6 @@ func DrawObject(content *fyne.Container, O *Object) {
 
 func DrawObjectInitial(content *fyne.Container, O *Object) {
 	RenderedObject = NewObjectRender(O, content)
-	// for i, _ := range RenderedObject.polygons {
-	// 	UpdatePolygon(RenderedObject, i)
-	// }
 }
 
 func DrawObjectPolygons(O *Object) {
@@ -163,8 +166,6 @@ func RotateObject(O *Object, r_Mat *matrix.Matrix) *Object {
 	r_O.FaceArray = O.FaceArray
 	r_O.EdgeArray = O.EdgeArray
 	r_O.Dimension = O.Dimension
-	Max_v = -math.MaxFloat32
-	Min_v = math.MaxFloat32
 	for _, vert := range O.VertexArray {
 		rotated_vert := RotateVertex(SubtractVertex(vert, r_O.Dimension.centerVertex), r_Mat)
 		AddVertex(r_O, SumVertex(rotated_vert, r_O.Dimension.centerVertex))
@@ -199,8 +200,62 @@ func ParseObject(filename string) *Object {
 	}
 	O.Dimension = FindObjectDimension(O.VertexArray)
 	Center_v = *O.Dimension.centerVertex
+	Max_v = max(Max_v, O.Dimension.max_x, O.Dimension.max_y)
+	Min_v = min(Min_v, O.Dimension.min_x, O.Dimension.min_y)
 	if err := scanner.Err(); err != nil {
 		log.Fatalf("Error during scanning: %s", err)
 	}
+	fmt.Println(filename, "Parsed")
 	return O
+}
+
+func NormalizeObject(O *Object, maxEdgeLength float32) *Object {
+	s_O := NewObject()
+	s_O.FaceArray = O.FaceArray
+	s_O.EdgeArray = O.EdgeArray
+	dilation := maxEdgeLength / max(GetSizeX(O), GetSizeY(O), GetSizeZ(O))
+	for _, vert := range O.VertexArray {
+		scaled_vert := ScaleVertex(SubtractVertex(vert, GetCenterVertex(O)), dilation)
+		s_O.VertexArray = append(s_O.VertexArray, scaled_vert)
+	}
+	s_O.Dimension = FindObjectDimension(s_O.VertexArray)
+	Max_v = max(-math.MaxFloat32, s_O.Dimension.max_x*1.2, s_O.Dimension.max_y*1.2)
+	Min_v = min(math.MaxFloat32, s_O.Dimension.min_x*1.2, s_O.Dimension.min_y*1.2)
+	fmt.Println(Max_v, Min_v)
+	return s_O
+}
+
+func SaveObject(filename string, O* Object) (string) {
+	save_path := "../data/saves/"
+	file_path := ""
+	in := 0
+	for {
+		indexing := ""
+		if (in > 0) {
+			indexing = "_" + fmt.Sprintf("%d", in)
+		}
+		file_path = save_path + filename + indexing + ".obj"
+		_, err := os.Open(file_path)
+		if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				break
+			}
+		}
+		in++
+	}
+	file, err := os.Create(file_path)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	for _, vert := range O.VertexArray {
+		vertice_line := fmt.Sprintf("v %.6f %.6f %.6f\n", vert.x, vert.y, vert.z)
+		_, err = file.WriteString(vertice_line)
+	}
+
+	for _, face := range O.FaceArray {
+		face_line := fmt.Sprintf("f %d %d %d\n", face.v1_idx, face.v2_idx, face.v3_idx)
+		_, err = file.WriteString(face_line)
+	}
+	return file_path
 }
