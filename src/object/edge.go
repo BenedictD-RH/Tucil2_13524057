@@ -25,7 +25,7 @@ func isEdgeEqual(e1, e2 *Edge) bool {
 }
 
 func isEdgeInObject(O *Object, e *Edge) bool {
-	for _, edge := range O.edgeArray {
+	for _, edge := range O.EdgeArray {
 		if isEdgeEqual(edge, e) {
 			return true
 		}
@@ -34,8 +34,8 @@ func isEdgeInObject(O *Object, e *Edge) bool {
 }
 
 func isVertexInAnEdge(O *Object, v *Vertex) bool {
-	for _, edge := range O.edgeArray {
-		if (v == O.vertexArray[edge.v1_idx - 1] || v == O.vertexArray[edge.v2_idx - 1]) {
+	for _, edge := range O.EdgeArray {
+		if v == O.VertexArray[edge.v1_idx-1] || v == O.VertexArray[edge.v2_idx-1] {
 			return true
 		}
 	}
@@ -43,7 +43,7 @@ func isVertexInAnEdge(O *Object, v *Vertex) bool {
 }
 
 func DrawEdge(content *fyne.Container, O *Object, idx int) {
-	DrawEdgeTo2DSpace(content, O.vertexArray[O.edgeArray[idx].v1_idx-1], O.vertexArray[O.edgeArray[idx].v2_idx-1])
+	DrawEdgeTo2DSpace(content, O.VertexArray[O.EdgeArray[idx].v1_idx-1], O.VertexArray[O.EdgeArray[idx].v2_idx-1])
 }
 
 func DrawEdgeTo2DSpace(c *fyne.Container, v1 *Vertex, v2 *Vertex) {
